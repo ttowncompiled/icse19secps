@@ -60,24 +60,36 @@ def run_trial_no_collisions(alpha, beta, n, uavs, victims, adj, turns):
     return results
 
 def main():
+    uavs = [ x for x in range(4) ]
+    victims = [ y for y in range(10) ]
+    n, rows, cols = 164, 4, 41
+    turns = 60
+    # run trials with no collisions
     alpha = 0.8
     beta = 0.8
-    n = 9
-    uavs = { 0: 0, 1: 1, 2: 2 }
-    victims = { 0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8 }
-    adj = {
-        0: [ 1, 3 ],
-        1: [ 0, 2, 4 ],
-        2: [ 1, 5 ],
-        3: [ 0, 4, 6 ],
-        4: [ 1, 3, 5, 7 ],
-        5: [ 2, 4, 8 ],
-        6: [ 3, 7 ],
-        7: [ 6, 4, 8 ],
-        8: [ 7, 5 ]
-    }
-    turns = 10
-    print(run_trial_no_collisions(alpha, beta, n, uavs, victims, adj, turns))
+    uav_conf, occupied_zones = {}, set({})
+    for u_id in uavs:
+        zone = random.randint(0, n)
+        while zone in occupied_zones:
+            zone = random.randint(0, n)
+        uav_conf[u_id] = zone
+        occupied_zones = occupied_zones.union(set({ zone }))
+    victim_conf = {}
+    for v_id in victims:
+        victim_conf[v_id] = random.randint(0, n)
+    adj = {}
+    for i in range(n):
+        adj_list = []
+        if i // cols - 1 >= 0:
+            adj_list.append( (i // cols - 1) * cols + i % cols )
+        if (i + 1) % cols != 0:
+            adj_list.append( i + 1 )
+        if i // cols + 1 < rows:
+            adj_list.append( (i // cols + 1) * cols + i % cols )
+        if i % 41 != 0:
+            adj_list.append( i - 1 )
+        adj[i] = adj_list
+    print(run_trial_no_collisions(alpha, beta, n, uav_conf, victim_conf, adj, turns))
     return "test"
 
 if __name__ == "__main__":
