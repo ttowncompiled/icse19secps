@@ -65,17 +65,15 @@ def run_trial(alpha, beta, n, uavs, victims, adj, turns, allow_collisions):
     return (alpha, beta, eff, len(victims))
 
 
-def run_trials(uavs, victims, n, rows, cols, turns, adj, alphas, betas, trials):
+def run_trials(uavs, victims, n, rows, cols, turns, adj, alphas, betas, trials, seed):
+    random.seed(seed)
     r1, r2 = [], []
     for alpha in alphas:
         for beta in betas:
             for trial in range(trials):
                 uav_conf = []
                 for u_i in range(uavs):
-                    zone = random.randint(0, n-1)
-                    while zone in uav_conf and not allow_collisions:
-                        zone = random.randint(0, n-1)
-                    uav_conf.append(zone)
+                    uav_conf.append(random.randint(0, n-1))
                 victim_conf = []
                 for v_j in range(victims):
                     victim_conf.append(random.randint(0, n-1))
@@ -88,24 +86,24 @@ def run_trials(uavs, victims, n, rows, cols, turns, adj, alphas, betas, trials):
     return r1, r2
 
 
-def graph_results(r1, r2, title):
-    data = []
-    for p_i in r1:
-        data.append([p_i[0], p_i[1], p_i[2]])
-    df = pd.DataFrame(data, columns=['X', 'Y', 'Z'])
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    ax.plot_trisurf(df['X'], df['Y'], df['Z'], cmap=plt.cm.jet, linewidth=0.01)
-    ax.set_xlabel('alpha')
-    ax.set_ylabel('beta')
-    ax.set_zlabel('effectiveness')
-    plt.show()
-    plt.savefig(title + '.png')
-
+def graph_results(r1, r2, title, diff_only=False, set_lims=True):
+    if not diff_only:
+        data = []
+        for p_i in r1:
+            data.append([p_i[0], p_i[1], p_i[2]])
+        df = pd.DataFrame(data, columns=['X', 'Y', 'Z'])
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        ax.plot_trisurf(df['X'], df['Y'], df['Z'], cmap=plt.cm.jet, linewidth=0.01)
+        ax.set_xlabel('alpha')
+        ax.set_ylabel('beta')
+        ax.set_zlabel('effectiveness')
+        plt.show()
+        plt.savefig(title + '.png')
     delta = []
     for i in range(len(r1)):
         t1, t2 = r1[i], r2[i]
-        delta.append((t1[0], t1[1], t2[2] - t1[2], t2[3] - t1[3]))
+        delta.append((t1[0], t1[1], t2[2]-t1[2], t2[3] - t1[3]))
     data = []
     for d_i in delta:
         data.append([d_i[0], d_i[1], d_i[2]])
@@ -113,6 +111,8 @@ def graph_results(r1, r2, title):
     fig = plt.figure()
     ax = fig.gca(projection='3d')
     ax.plot_trisurf(df['X'], df['Y'], df['Z'], cmap=plt.cm.jet, linewidth=0.01)
+    if set_lims:
+        ax.set_zlim3d(-0.05, 0.05)
     ax.set_xlabel('alpha')
     ax.set_ylabel('beta')
     ax.set_zlabel('effectiveness')
@@ -121,7 +121,8 @@ def graph_results(r1, r2, title):
 
 
 def main():
-    uavs = 4
+    seed = 695480078
+    uavs = [4, 8, 16, 24, 32, 64, 128]
     victims = 10
     n, rows, cols = 164, 4, 41
     turns = 60
@@ -140,8 +141,12 @@ def main():
     alphas = [ float(x+1) / 20.0 for x in range(20) ]
     betas = [ float(x+1) / 20.0 for x in range(20) ]
     trials = 1
-    r1, r2 = run_trials(uavs, victims, n, rows, cols, turns, adj, alphas, betas, trials)
-    graph_results(r1, r2, 'fig.4')
+    u1, u2 = run_trials(uavs[0], victims, n, rows, cols, turns, adj, alphas, betas, trials, seed)
+    graph_results(u1, u2, 'fig.' + str(uavs[0]))
+    for j in range(1, len(uavs)):
+        r1, r2 = run_trials(uavs[j], victims, n, rows, cols, turns, adj, alphas, betas, trials, seed)
+        graph_results(r1, r2, 'fig.' + str(uavs[j]))
+        graph_results(u1, r1, 'fig.4.' + str(uavs[j]), diff_only=True, set_lims=False)
 
 
 if __name__ == "__main__":
