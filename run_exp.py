@@ -1,4 +1,8 @@
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+import pandas as pd
 import random
+import seaborn as sns
 
 def run_trial(alpha, beta, n, uavs, victims, adj, turns, allow_collisions):
     """
@@ -61,8 +65,8 @@ def run_trial(alpha, beta, n, uavs, victims, adj, turns, allow_collisions):
     return (alpha, beta, eff, len(victims))
 
 
-def run_trials(uavs, victims, n, rows, cols, turns, adj, alphas, betas, trials, allow_collisions):
-    results = []
+def run_trials(uavs, victims, n, rows, cols, turns, adj, alphas, betas, trials):
+    r1, r2 = [], []
     for alpha in alphas:
         for beta in betas:
             for trial in range(trials):
@@ -76,9 +80,44 @@ def run_trials(uavs, victims, n, rows, cols, turns, adj, alphas, betas, trials, 
                 for v_j in range(victims):
                     victim_conf.append(random.randint(0, n-1))
                 trial_results = run_trial(alpha, beta, n, uav_conf, victim_conf,
-                        adj, turns, allow_collisions)
-                results.append(trial_results)
-    return results
+                        adj, turns, True)
+                r1.append(trial_results)
+                trial_results = run_trial(alpha, beta, n, uav_conf, victim_conf,
+                        adj, turns, False)
+                r2.append(trial_results)
+    return r1, r2
+
+
+def graph_results(r1, r2, title):
+    data = []
+    for p_i in r1:
+        data.append([p_i[0], p_i[1], p_i[2]])
+    df = pd.DataFrame(data, columns=['X', 'Y', 'Z'])
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    ax.plot_trisurf(df['X'], df['Y'], df['Z'], cmap=plt.cm.jet, linewidth=0.01)
+    ax.set_xlabel('alpha')
+    ax.set_ylabel('beta')
+    ax.set_zlabel('effectiveness')
+    plt.show()
+    plt.savefig(title + '.png')
+
+    delta = []
+    for i in range(len(r1)):
+        t1, t2 = r1[i], r2[i]
+        delta.append((t1[0], t1[1], t2[2] - t1[2], t2[3] - t1[3]))
+    data = []
+    for d_i in delta:
+        data.append([d_i[0], d_i[1], d_i[2]])
+    df = pd.DataFrame(data, columns=['X', 'Y', 'Z'])
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    ax.plot_trisurf(df['X'], df['Y'], df['Z'], cmap=plt.cm.jet, linewidth=0.01)
+    ax.set_xlabel('alpha')
+    ax.set_ylabel('beta')
+    ax.set_zlabel('effectiveness')
+    plt.show()
+    plt.savefig(title + '.diff.png')
 
 
 def main():
@@ -98,11 +137,11 @@ def main():
         if i % 41 != 0:
             adj_list.append( i - 1 )
         adj[i] = adj_list
-    alphas = [ float(x+1) / 10.0 for x in range(10) ]
-    betas = [ float(x+1) / 10.0 for x in range(10) ]
+    alphas = [ float(x+1) / 20.0 for x in range(20) ]
+    betas = [ float(x+1) / 20.0 for x in range(20) ]
     trials = 1
-    print(run_trials(uavs, victims, n, rows, cols, turns, adj, alphas, betas, trials, False))
-    print(run_trials(uavs, victims, n, rows, cols, turns, adj, alphas, betas, trials, True))
+    r1, r2 = run_trials(uavs, victims, n, rows, cols, turns, adj, alphas, betas, trials)
+    graph_results(r1, r2, 'fig.4')
 
 
 if __name__ == "__main__":
