@@ -35,9 +35,10 @@ def run_trial(alpha, beta, n, uavs, victims, adj, turns, allow_collisions):
                         continue
                     next_zone = a_j
             sys_turn.append(next_zone)
+        uavs = sys_turn
+        for next_zone in uavs:
             # update heatmap after performing a scan
             heatmap[next_zone] = heatmap[next_zone] * (1 - alpha)
-        uavs = sys_turn
         # update mission effectiveness
         eff = 1 - sum(heatmap)
         # environmental player turn
@@ -95,9 +96,10 @@ def graph_results(r1, r2, title, diff_only=False, set_lims=True):
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         ax.plot_trisurf(df['X'], df['Y'], df['Z'], cmap=plt.cm.jet, linewidth=0.01)
-        ax.set_xlabel('alpha')
-        ax.set_ylabel('beta')
-        ax.set_zlabel('effectiveness')
+        ax.set_title('Best Accrued Reward across values of Alpha and Beta')
+        ax.set_xlabel('beta (β)')
+        ax.set_ylabel('alpha (α)')
+        ax.set_zlabel('accrued reward (R)')
         plt.show()
         plt.savefig(title + '.png')
     delta = []
@@ -111,13 +113,13 @@ def graph_results(r1, r2, title, diff_only=False, set_lims=True):
     fig = plt.figure()
     ax = fig.gca(projection='3d')
     ax.plot_trisurf(df['X'], df['Y'], df['Z'], cmap=plt.cm.jet, linewidth=0.01)
-    if set_lims:
-        ax.set_zlim3d(-0.05, 0.05)
-    ax.set_xlabel('alpha')
-    ax.set_ylabel('beta')
-    ax.set_zlabel('effectiveness')
+    ax.set_title('Differential Accrued Reward across values of Alpha and Beta')
+    ax.set_xlabel('beta (β)')
+    ax.set_ylabel('alpha (α)')
+    ax.set_zlabel('accrued reward (R)')
     plt.show()
     plt.savefig(title + '.diff.png')
+    plt.close('all')
 
 
 def main():
@@ -125,7 +127,7 @@ def main():
     uavs = [4, 8, 16, 24, 32, 64, 128]
     victims = 10
     n, rows, cols = 164, 4, 41
-    turns = 60
+    turns = [15, 30, 45, 60, 120]
     adj = {}
     for i in range(n):
         adj_list = []
@@ -141,12 +143,13 @@ def main():
     alphas = [ float(x+1) / 20.0 for x in range(20) ]
     betas = [ float(x+1) / 20.0 for x in range(20) ]
     trials = 1
-    u1, u2 = run_trials(uavs[0], victims, n, rows, cols, turns, adj, alphas, betas, trials, seed)
-    graph_results(u1, u2, 'fig.' + str(uavs[0]))
-    for j in range(1, len(uavs)):
-        r1, r2 = run_trials(uavs[j], victims, n, rows, cols, turns, adj, alphas, betas, trials, seed)
-        graph_results(r1, r2, 'fig.' + str(uavs[j]))
-        graph_results(u1, r1, 'fig.4.' + str(uavs[j]), diff_only=True, set_lims=False)
+    for t in turns:
+        u1, u2 = run_trials(uavs[0], victims, n, rows, cols, t, adj, alphas, betas, trials, seed)
+        graph_results(u1, u2, 'results-' + str(t) + '/fig.' + str(uavs[0]))
+        for j in range(1, len(uavs)):
+            r1, r2 = run_trials(uavs[j], victims, n, rows, cols, t, adj, alphas, betas, trials, seed)
+            graph_results(r1, r2, 'results-' + str(t) + '/fig.' + str(uavs[j]))
+            graph_results(u1, r1, 'results-' + str(t) + '/fig.4.' + str(uavs[j]), diff_only=True, set_lims=False)
 
 
 if __name__ == "__main__":
