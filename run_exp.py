@@ -25,18 +25,16 @@ def run_trial(alpha, beta, n, uav_conf, victim_conf, adj, turns, collisions=Fals
     for t in range(turns):
         # system player turn
         sys_turn = []
-        idx = 0
         for u_zone in uav_conf:
             next_zone = u_zone
             # update location of UAV
-            if not stay_put or idx % 2 == 0:
+            if not stay_put:
                 for a_j in adj[u_zone]:
                     if heatmap[a_j] > heatmap[next_zone]:
                         if a_j in sys_turn and collisions:
                             continue
                         next_zone = a_j
             sys_turn.append(next_zone)
-            idx += 1
         uav_conf = sys_turn
         for next_zone in uav_conf:
             # update heatmap after performing a scan
@@ -99,7 +97,7 @@ def graph_results(r1, r2, r3, title):
     fig = plt.figure()
     ax = fig.gca(projection='3d')
     ax.plot_trisurf(df['Y'], df['X'], df['Z'], cmap=plt.cm.jet, linewidth=0.01)
-    ax.set_title('Best Accrued Reward across values of Alpha and Beta')
+    # ax.set_title('Best Accrued Reward across values of Alpha and Beta')
     ax.set_ylabel('alpha (α)')
     ax.set_xlabel('beta (β)')
     ax.set_zlabel('accrued reward (R)')
@@ -116,10 +114,10 @@ def graph_results(r1, r2, r3, title):
     fig = plt.figure()
     ax = fig.gca(projection='3d')
     ax.plot_trisurf(df['Y'], df['X'], df['Z'], cmap=plt.cm.jet, linewidth=0.01)
-    ax.set_title('Differential Accrued Reward across values of Alpha and Beta')
+    # ax.set_title('Differential Accrued Reward across values of Alpha and Beta')
     ax.set_ylabel('alpha (α)')
     ax.set_xlabel('beta (β)')
-    ax.set_zlabel('accrued reward (R)')
+    ax.set_zlabel('change in R')
     plt.show()
     plt.savefig(title + '.collisions.diff.png')
     delta = []
@@ -133,10 +131,10 @@ def graph_results(r1, r2, r3, title):
     fig = plt.figure()
     ax = fig.gca(projection='3d')
     ax.plot_trisurf(df['Y'], df['X'], df['Z'], cmap=plt.cm.jet, linewidth=0.01)
-    ax.set_title('Differential Accrued Reward across values of Alpha and Beta')
+    # ax.set_title('Differential Accrued Reward across values of Alpha and Beta')
     ax.set_ylabel('alpha (α)')
     ax.set_xlabel('beta (β)')
-    ax.set_zlabel('accrued reward (R)')
+    ax.set_zlabel('change in R')
     plt.show()
     plt.savefig(title + '.stay.diff.png')
     plt.close('all')
